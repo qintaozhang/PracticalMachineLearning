@@ -1,0 +1,123 @@
+---
+title: "PracticMachineLearningProject"
+author: "Qintao Zhang"
+date: "July 26, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE, cache=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Practice Machine Learning project
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+```{r library}
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(RColorBrewer)
+library(rattle)
+library(randomForest)
+```
+```{r set_wkdir}
+setwd("C:/qtzhang/study/Classes/John Hopkins data science/8. practical machine learning/project/")
+```
+
+### First step: read data into R and roughly check on dimensions and str
+
+```{r data_explorer, echo=FALSE}
+training <- read.csv("pml-training.csv", na.strings=c("NA","#DIV/0!",""))
+testing <- read.csv("pml-testing.csv", na.strings=c("NA","#DIV/0!",""))
+dim(training);dim(testing)
+str(training)
+table(training$classe)
+```
+
+### Observations: clearly data has lots of NA, thus need a data clean-up process
+
+####Two steps were done here: First grab important/useful parameters. This is a purely empircal step based on description of the project
+
+```{r data_preprocess1}
+
+focalParm <-grep(pattern = "_belt|_arm|_dumbbell|_forearm", names(training))
+features<-training[,focalParm]
+training <- training[, c(focalParm,160)]
+testing<-testing[,c(focalParm,160)]
+dim(training);dim(testing)
+
+```
+#### Second step: remove NAs, in which the No. 160 is "classe". This step is really because lots of NAs are found in dataset. Without this step, the train step doesn't run.
+
+```{r remove_NA}
+is_data  <- apply(!is.na(training), 2, sum) ==dim(training)[1]  # which is the number of observations
+training <- training[, is_data]
+testing  <- testing[, is_data]
+dim(training);dim(testing)
+```
+
+#### nearZeroVar is a great tool to remove features which doesn't really change, thus doesn't contribute to total variation
+
+```{r remove_nochangedata}
+nzv_cols <- nearZeroVar(training)
+if(length(nzv_cols) > 0) {
+  training <- training[, -nzv_cols]
+  testing <- testing[, -nzv_cols]
+}
+dim(training);dim(testing)
+
+```
+
+#### Ideal case, I would love to do k-fold but to save time, I simply used training/verfication split introduced in class, where 80% was training, 20% was verification
+
+```{r split_data}
+inTrain <- createDataPartition(y=training$classe, p=0.8, list=FALSE)
+InsideTraining <- training[inTrain, ]; 
+Verification <- training[-inTrain, ]
+dim(InsideTraining); dim(Verification)
+
+```
+#### PCA is preferred here because it mathmatically reduce the demnisions and I want to minimize any manual disturb on data
+
+```{r PCA}
+features<-InsideTraining[, -which(names(training) == "classe")]
+#this preProc will be used in verification and testing
+preProc <- preProcess(features,
+                      method = "pca",
+                      thresh = 0.8)
+output <- preProc$rotation
+PCA_Parm<-predict(preProc,features)
+dim(PCA_Parm)
+
+```
+### output suggested only 12 parameter needed to represent 80%
+```{r simple fit}
+start<-proc.time()
+start 
+modelFit <- train(InsideTraining$classe ~ .,method="rf",data=PCA_Parm,verbose = TRUE)
+end<-proc.time()
+end-start
+
+#this training takes roughly 20 minutes
+
+```
+
+```{r verification}
+VerifiFeatures<-Verification[, -which(names(Verification) == "classe")]
+VerifiPCA<-predict(preProc,VerifiFeatures)
+predictions <- predict(modelFit, newdata=VerifiPCA)
+confusionMat <- confusionMatrix(predictions, Verification$classe)
+confusionMat
+```
+# Uing 80% of variation through PCA, accuracy is 0.9882
+
+### check on testing data
+```{r submission}
+
+TestingPCA<-predict(preProc,testing)
+predictTesting <- predict(modelFit, newdata=TestingPCA)
+testing$classe <- predictTesting
+
+```
+#### The model correctly predict all cases in testing dataset correctly.
