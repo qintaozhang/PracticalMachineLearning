@@ -313,17 +313,17 @@ dim(PCA_Parm)</code></pre>
 <pre><code>## [1] 14718    10</code></pre>
 </div>
 </div>
-<div id="output-suggested-only-11-parameter-needed-to-represent-75" class="section level3">
-<h3>output suggested only 11 parameter needed to represent 75%</h3>
+<div id="output-suggested-only-10-parameter-needed-to-represent-75" class="section level3">
+<h3>output suggested only 10 parameter needed to represent 75%</h3>
 <pre class="r"><code>start&lt;-proc.time()
 start </code></pre>
 <pre><code>##    user  system elapsed 
-##   10.67    0.42   11.31</code></pre>
+##   10.71    0.35   11.27</code></pre>
 <pre class="r"><code>modelFit &lt;- train(InsideTraining$classe ~ .,method=&quot;rf&quot;,data=PCA_Parm,verbose = TRUE)
 end&lt;-proc.time()
 end-start</code></pre>
 <pre><code>##    user  system elapsed 
-##  868.56   17.30  887.31</code></pre>
+##  865.43   15.84  881.58</code></pre>
 <pre class="r"><code>#this training takes roughly 15minutes</code></pre>
 <pre class="r"><code>VerifiFeatures&lt;-Verification[, -which(names(Verification) == &quot;classe&quot;)]
 VerifiPCA&lt;-predict(preProc,VerifiFeatures)
@@ -334,37 +334,37 @@ confusionMat</code></pre>
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1368   16   10    8    2
-##          B    9  904   16    0    6
-##          C    8   22  814   43    2
-##          D    5    7   14  751    7
-##          E    5    0    1    2  884
+##          A 1362   22   11    9    5
+##          B   11  890    9    5    4
+##          C   10   25  817   35   10
+##          D   10    8   16  753    5
+##          E    2    4    2    2  877
 ## 
 ## Overall Statistics
-##                                          
-##                Accuracy : 0.9627         
-##                  95% CI : (0.957, 0.9678)
-##     No Information Rate : 0.2845         
-##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16      
-##                                          
-##                   Kappa : 0.9528         
-##  Mcnemar's Test P-Value : 8.508e-05      
+##                                           
+##                Accuracy : 0.9582          
+##                  95% CI : (0.9522, 0.9636)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9471          
+##  Mcnemar's Test P-Value : 0.002631        
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.9806   0.9526   0.9520   0.9341   0.9811
-## Specificity            0.9897   0.9922   0.9815   0.9920   0.9980
-## Pos Pred Value         0.9744   0.9668   0.9156   0.9579   0.9910
-## Neg Pred Value         0.9923   0.9887   0.9898   0.9871   0.9958
+## Sensitivity            0.9763   0.9378   0.9556   0.9366   0.9734
+## Specificity            0.9866   0.9927   0.9802   0.9905   0.9975
+## Pos Pred Value         0.9666   0.9684   0.9108   0.9508   0.9887
+## Neg Pred Value         0.9906   0.9852   0.9905   0.9876   0.9940
 ## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
-## Detection Rate         0.2790   0.1843   0.1660   0.1531   0.1803
-## Detection Prevalence   0.2863   0.1907   0.1813   0.1599   0.1819
-## Balanced Accuracy      0.9852   0.9724   0.9668   0.9630   0.9896</code></pre>
+## Detection Rate         0.2777   0.1815   0.1666   0.1535   0.1788
+## Detection Prevalence   0.2873   0.1874   0.1829   0.1615   0.1809
+## Balanced Accuracy      0.9815   0.9652   0.9679   0.9635   0.9854</code></pre>
 </div>
 </div>
-<div id="uing-80-of-variation-through-pca-accuracy-is-0.9882" class="section level1">
-<h1>Uing 80% of variation through PCA, accuracy is 0.9882</h1>
+<div id="uing-80-of-variation-through-pca-accuracy-is-0.9625" class="section level1">
+<h1>Uing 80% of variation through PCA, accuracy is 0.9625</h1>
 <div id="check-on-testing-data" class="section level3">
 <h3>check on testing data</h3>
 <pre class="r"><code>TestingPCA&lt;-predict(preProc,testing)
