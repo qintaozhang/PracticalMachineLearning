@@ -25,9 +25,9 @@ library(randomForest)
 setwd("C:/qtzhang/study/Classes/John Hopkins data science/8. practical machine learning/project/")
 ```
 
-### First step: read data into R and roughly check on dimensions and str
+### First step: read data into R and roughly check on dimensions and structure
 
-```{r data_explorer, echo=FALSE}
+```{r data_explorer, echo=TRUE}
 training <- read.csv("pml-training.csv", na.strings=c("NA","#DIV/0!",""))
 testing <- read.csv("pml-testing.csv", na.strings=c("NA","#DIV/0!",""))
 dim(training);dim(testing)
@@ -69,10 +69,10 @@ dim(training);dim(testing)
 
 ```
 
-#### Ideal case, I would love to do k-fold but to save time, I simply used training/verfication split introduced in class, where 80% was training, 20% was verification
+#### Ideal case, I would love to do k-fold but to save time, I simply used training/verfication split introduced in class, where 75% was training, 25% was verification
 
 ```{r split_data}
-inTrain <- createDataPartition(y=training$classe, p=0.8, list=FALSE)
+inTrain <- createDataPartition(y=training$classe, p=0.75, list=FALSE)
 InsideTraining <- training[inTrain, ]; 
 Verification <- training[-inTrain, ]
 dim(InsideTraining); dim(Verification)
@@ -85,13 +85,13 @@ features<-InsideTraining[, -which(names(training) == "classe")]
 #this preProc will be used in verification and testing
 preProc <- preProcess(features,
                       method = "pca",
-                      thresh = 0.8)
+                      thresh = 0.75)
 output <- preProc$rotation
 PCA_Parm<-predict(preProc,features)
 dim(PCA_Parm)
 
 ```
-### output suggested only 12 parameter needed to represent 80%
+### output suggested only 10 parameter needed to represent 75%
 ```{r simple fit}
 start<-proc.time()
 start 
@@ -99,7 +99,7 @@ modelFit <- train(InsideTraining$classe ~ .,method="rf",data=PCA_Parm,verbose = 
 end<-proc.time()
 end-start
 
-#this training takes roughly 20 minutes
+#this training takes roughly 15minutes
 
 ```
 
@@ -110,7 +110,7 @@ predictions <- predict(modelFit, newdata=VerifiPCA)
 confusionMat <- confusionMatrix(predictions, Verification$classe)
 confusionMat
 ```
-# Uing 80% of variation through PCA, accuracy is 0.9882
+# Uing 80% of variation through PCA, accuracy is 0.9625
 
 ### check on testing data
 ```{r submission}

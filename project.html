@@ -145,10 +145,14 @@ library(rattle)</code></pre>
 ## 
 ##     margin</code></pre>
 <pre class="r"><code>setwd(&quot;C:/qtzhang/study/Classes/John Hopkins data science/8. practical machine learning/project/&quot;)</code></pre>
-<div id="first-step-read-data-into-r-and-roughly-check-on-dimensions-and-str" class="section level3">
-<h3>First step: read data into R and roughly check on dimensions and str</h3>
+<div id="first-step-read-data-into-r-and-roughly-check-on-dimensions-and-structure" class="section level3">
+<h3>First step: read data into R and roughly check on dimensions and structure</h3>
+<pre class="r"><code>training &lt;- read.csv(&quot;pml-training.csv&quot;, na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;,&quot;&quot;))
+testing &lt;- read.csv(&quot;pml-testing.csv&quot;, na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;,&quot;&quot;))
+dim(training);dim(testing)</code></pre>
 <pre><code>## [1] 19622   160</code></pre>
 <pre><code>## [1]  20 160</code></pre>
+<pre class="r"><code>str(training)</code></pre>
 <pre><code>## 'data.frame':    19622 obs. of  160 variables:
 ##  $ X                       : int  1 2 3 4 5 6 7 8 9 10 ...
 ##  $ user_name               : Factor w/ 6 levels &quot;adelmo&quot;,&quot;carlitos&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
@@ -250,6 +254,7 @@ library(rattle)</code></pre>
 ##  $ min_yaw_dumbbell        : num  NA NA NA NA NA NA NA NA NA NA ...
 ##  $ amplitude_roll_dumbbell : num  NA NA NA NA NA NA NA NA NA NA ...
 ##   [list output truncated]</code></pre>
+<pre class="r"><code>table(training$classe)</code></pre>
 <pre><code>## 
 ##    A    B    C    D    E 
 ## 5580 3797 3422 3216 3607</code></pre>
@@ -286,14 +291,14 @@ dim(training);dim(testing)</code></pre>
 <pre><code>## [1] 19622    53</code></pre>
 <pre><code>## [1] 20 53</code></pre>
 </div>
-<div id="ideal-case-i-would-love-to-do-k-fold-but-to-save-time-i-simply-used-trainingverfication-split-introduced-in-class-where-80-was-training-20-was-verification" class="section level4">
-<h4>Ideal case, I would love to do k-fold but to save time, I simply used training/verfication split introduced in class, where 80% was training, 20% was verification</h4>
-<pre class="r"><code>inTrain &lt;- createDataPartition(y=training$classe, p=0.8, list=FALSE)
+<div id="ideal-case-i-would-love-to-do-k-fold-but-to-save-time-i-simply-used-trainingverfication-split-introduced-in-class-where-75-was-training-25-was-verification" class="section level4">
+<h4>Ideal case, I would love to do k-fold but to save time, I simply used training/verfication split introduced in class, where 75% was training, 25% was verification</h4>
+<pre class="r"><code>inTrain &lt;- createDataPartition(y=training$classe, p=0.75, list=FALSE)
 InsideTraining &lt;- training[inTrain, ]; 
 Verification &lt;- training[-inTrain, ]
 dim(InsideTraining); dim(Verification)</code></pre>
-<pre><code>## [1] 15699    53</code></pre>
-<pre><code>## [1] 3923   53</code></pre>
+<pre><code>## [1] 14718    53</code></pre>
+<pre><code>## [1] 4904   53</code></pre>
 </div>
 <div id="pca-is-preferred-here-because-it-mathmatically-reduce-the-demnisions-and-i-want-to-minimize-any-manual-disturb-on-data" class="section level4">
 <h4>PCA is preferred here because it mathmatically reduce the demnisions and I want to minimize any manual disturb on data</h4>
@@ -301,25 +306,25 @@ dim(InsideTraining); dim(Verification)</code></pre>
 #this preProc will be used in verification and testing
 preProc &lt;- preProcess(features,
                       method = &quot;pca&quot;,
-                      thresh = 0.8)
+                      thresh = 0.75)
 output &lt;- preProc$rotation
 PCA_Parm&lt;-predict(preProc,features)
 dim(PCA_Parm)</code></pre>
-<pre><code>## [1] 15699    12</code></pre>
+<pre><code>## [1] 14718    10</code></pre>
 </div>
 </div>
-<div id="output-suggested-only-12-parameter-needed-to-represent-80" class="section level3">
-<h3>output suggested only 12 parameter needed to represent 80%</h3>
+<div id="output-suggested-only-11-parameter-needed-to-represent-75" class="section level3">
+<h3>output suggested only 11 parameter needed to represent 75%</h3>
 <pre class="r"><code>start&lt;-proc.time()
 start </code></pre>
 <pre><code>##    user  system elapsed 
-##   10.20    0.40   10.78</code></pre>
+##   10.67    0.42   11.31</code></pre>
 <pre class="r"><code>modelFit &lt;- train(InsideTraining$classe ~ .,method=&quot;rf&quot;,data=PCA_Parm,verbose = TRUE)
 end&lt;-proc.time()
 end-start</code></pre>
 <pre><code>##    user  system elapsed 
-## 1198.15   19.42 1218.28</code></pre>
-<pre class="r"><code>#this training takes roughly 20 minutes</code></pre>
+##  868.56   17.30  887.31</code></pre>
+<pre class="r"><code>#this training takes roughly 15minutes</code></pre>
 <pre class="r"><code>VerifiFeatures&lt;-Verification[, -which(names(Verification) == &quot;classe&quot;)]
 VerifiPCA&lt;-predict(preProc,VerifiFeatures)
 predictions &lt;- predict(modelFit, newdata=VerifiPCA)
@@ -329,33 +334,33 @@ confusionMat</code></pre>
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1092   14    2    9    1
-##          B    4  733    9    1    7
-##          C   11    9  661   40    3
-##          D    4    0   12  593    6
-##          E    5    3    0    0  704
+##          A 1368   16   10    8    2
+##          B    9  904   16    0    6
+##          C    8   22  814   43    2
+##          D    5    7   14  751    7
+##          E    5    0    1    2  884
 ## 
 ## Overall Statistics
 ##                                          
-##                Accuracy : 0.9643         
-##                  95% CI : (0.958, 0.9699)
+##                Accuracy : 0.9627         
+##                  95% CI : (0.957, 0.9678)
 ##     No Information Rate : 0.2845         
 ##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16      
 ##                                          
-##                   Kappa : 0.9549         
-##  Mcnemar's Test P-Value : 4.866e-06      
+##                   Kappa : 0.9528         
+##  Mcnemar's Test P-Value : 8.508e-05      
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.9785   0.9657   0.9664   0.9222   0.9764
-## Specificity            0.9907   0.9934   0.9805   0.9933   0.9975
-## Pos Pred Value         0.9767   0.9721   0.9130   0.9642   0.9888
-## Neg Pred Value         0.9914   0.9918   0.9928   0.9849   0.9947
-## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
-## Detection Rate         0.2784   0.1868   0.1685   0.1512   0.1795
-## Detection Prevalence   0.2850   0.1922   0.1846   0.1568   0.1815
-## Balanced Accuracy      0.9846   0.9796   0.9735   0.9578   0.9870</code></pre>
+## Sensitivity            0.9806   0.9526   0.9520   0.9341   0.9811
+## Specificity            0.9897   0.9922   0.9815   0.9920   0.9980
+## Pos Pred Value         0.9744   0.9668   0.9156   0.9579   0.9910
+## Neg Pred Value         0.9923   0.9887   0.9898   0.9871   0.9958
+## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
+## Detection Rate         0.2790   0.1843   0.1660   0.1531   0.1803
+## Detection Prevalence   0.2863   0.1907   0.1813   0.1599   0.1819
+## Balanced Accuracy      0.9852   0.9724   0.9668   0.9630   0.9896</code></pre>
 </div>
 </div>
 <div id="uing-80-of-variation-through-pca-accuracy-is-0.9882" class="section level1">
